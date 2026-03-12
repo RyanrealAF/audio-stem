@@ -1,4 +1,3 @@
-import React from 'react';
 
 export const Screw = () => (
   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-900 border border-black flex items-center justify-center shadow-lg">

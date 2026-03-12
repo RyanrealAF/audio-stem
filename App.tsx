@@ -1,16 +1,12 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { 
-  Activity, 
-  Upload, 
   Zap, 
   Disc,
   Settings,
   Waves,
   Mic2,
   Music,
-  Activity as BassIcon, // Alias to avoid conflict if `Activity` is used elsewhere
-  Download,
+  Activity as BassIcon,
   Play,
   Square,
   AlertCircle
@@ -38,40 +34,37 @@ const ImpactOscilloscope = ({ active, color, analyser }: { active: boolean, colo
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Using analyser.fftSize for time domain data.
     const dataArray = analyser ? new Uint8Array(analyser.fftSize) : null;
 
     const render = () => {
-      ctx.fillStyle = '#0a0a0c'; // Dark background for oscilloscope
+      ctx.fillStyle = '#0a0a0c';
       ctx.fillRect(0, 0, rect.width, rect.height);
       
-      // Grid lines
-      ctx.strokeStyle = '#1a1a1e'; // Subtle grid color
-      ctx.lineWidth = 0.5; // Thinner grid lines
-      for (let y = 0; y < rect.height; y += rect.height / 8) { // 8 horizontal lines
+      ctx.strokeStyle = '#1a1a1e';
+      ctx.lineWidth = 0.5;
+      for (let y = 0; y < rect.height; y += rect.height / 8) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(rect.width, y); ctx.stroke();
       }
-      for (let x = 0; x < rect.width; x += rect.width / 16) { // 16 vertical lines
+      for (let x = 0; x < rect.width; x += rect.width / 16) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, rect.height); ctx.stroke();
       }
 
-
       if (active && analyser && dataArray) {
-        analyser.getByteTimeDomainData(dataArray); // Get waveform data
+        analyser.getByteTimeDomainData(dataArray);
         
         ctx.beginPath();
         ctx.lineWidth = 2;
         ctx.strokeStyle = color;
-        ctx.shadowBlur = 10; // Softer glow
+        ctx.shadowBlur = 10;
         ctx.shadowColor = color;
         
         const midY = rect.height / 2;
-        const sliceWidth = rect.width * 1.0 / dataArray.length; // Ensure full width
+        const sliceWidth = rect.width * 1.0 / dataArray.length;
         let x = 0;
 
         for (let i = 0; i < dataArray.length; i++) {
-          const v = dataArray[i] / 128.0; // Normalize to 0-2 range
-          const y = (v - 1) * midY * 0.9 + midY; // Center waveform, slightly less amplitude
+          const v = dataArray[i] / 128.0;
+          const y = (v - 1) * midY * 0.9 + midY;
 
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
@@ -80,25 +73,32 @@ const ImpactOscilloscope = ({ active, color, analyser }: { active: boolean, colo
         }
         
         ctx.stroke();
-        ctx.shadowBlur = 0; // Reset shadow
+        ctx.shadowBlur = 0;
       }
       animationRef.current = requestAnimationFrame(render);
     };
     render();
     return () => cancelAnimationFrame(animationRef.current);
-  }, [active, color, analyser]); // Re-run effect if these props change
+  }, [active, color, analyser]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
 };
 
 // --- COMPONENT PRIMITIVES ---
 
-const OrbKnob = ({ label, value, onChange, color = "cyan", active = false }) => {
-  const rotation = (value / 1) * 270 - 135; // Value from 0 to 1, maps to -135deg to 135deg
+interface OrbKnobProps {
+  label: string;
+  value: number;
+  onChange: (val: number) => void;
+  color?: "cyan" | "purple";
+  active?: boolean;
+}
+
+const OrbKnob = ({ label, value, onChange, color = "cyan", active = false }: OrbKnobProps) => {
+  const rotation = (value / 1) * 270 - 135;
   const glow = active ? (color === "cyan" ? "0 0 30px #06b6d4" : "0 0 30px #a855f7") : "none";
   const borderColor = active ? (color === "cyan" ? "#06b6d4" : "#a855f7") : "#27272a";
   
-  // Toggles value between 0.2, 0.5, 0.8
   const handleClick = () => {
     let newValue;
     if (value < 0.35) newValue = 0.5;
@@ -127,7 +127,15 @@ const OrbKnob = ({ label, value, onChange, color = "cyan", active = false }) => 
   );
 };
 
-const ProFader = ({ label, value, onChange, color = "cyan", level = 0 }) => {
+interface ProFaderProps {
+  label: string;
+  value: number;
+  onChange: (val: number) => void;
+  color?: "cyan" | "purple";
+  level?: number;
+}
+
+const ProFader = ({ label, value, onChange, color = "cyan", level = 0 }: ProFaderProps) => {
   const height = value * 100;
   const meterHeight = level * 100;
 
@@ -137,7 +145,6 @@ const ProFader = ({ label, value, onChange, color = "cyan", level = 0 }) => {
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="h-44 w-12 bg-[#08080a] border border-zinc-800 rounded shadow-inner relative flex justify-center py-2">
-        {/* Meter Overlay (left side) */}
         <div className="absolute left-1 inset-y-2 w-1.5 bg-zinc-900 rounded-full flex flex-col-reverse overflow-hidden">
           {[...Array(8)].map((_, i) => (
             <div key={i} className={`w-full h-1/8 transition-colors duration-75 
@@ -146,24 +153,21 @@ const ProFader = ({ label, value, onChange, color = "cyan", level = 0 }) => {
           ))}
         </div>
 
-        {/* Fader Track */}
         <div className="w-[4px] h-full bg-zinc-900 rounded-full overflow-hidden relative">
           <div className={`absolute bottom-0 w-full ${bgColorClass} ${glowClass}`} style={{ height: `${height}%` }} />
         </div>
 
-        {/* Fader Cap */}
         <div 
           className="absolute left-1/2 -translate-x-1/2 w-10 h-7 bg-zinc-200 rounded-sm border-b-4 border-zinc-400 cursor-ns-resize shadow-xl z-20 flex items-center justify-center"
-          style={{ bottom: `calc(${height}% - 14px)` }} // Center the cap
+          style={{ bottom: `calc(${height}% - 14px)` }}
         >
-          <div className="w-full h-1 bg-zinc-800 mt-0.5"></div> {/* Indicator line */}
+          <div className="w-full h-1 bg-zinc-800 mt-0.5"></div>
         </div>
         
-        {/* Invisible range input for control */}
         <input 
           type="range" min="0" max="1" step="0.01" value={value} onChange={(e) => onChange(parseFloat(e.target.value))}
           className="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize"
-          style={{ appearance: 'slider-vertical' as any }} // Ensure vertical appearance
+          style={{ appearance: 'slider-vertical' as any }}
         />
       </div>
       <span className="text-[8px] font-black text-zinc-600 uppercase tracking-tighter">{label}</span>
@@ -172,8 +176,15 @@ const ProFader = ({ label, value, onChange, color = "cyan", level = 0 }) => {
   );
 };
 
-const ThresholdKnob = ({ label, icon: Icon, value, onChange }) => {
-  const rotation = (value / 1) * 270 - 135; // Value from 0 to 1, maps to -135deg to 135deg
+interface ThresholdKnobProps {
+  label: string;
+  icon: React.ElementType;
+  value: number;
+  onChange: (val: number) => void;
+}
+
+const ThresholdKnob = ({ label, icon: Icon, value, onChange }: ThresholdKnobProps) => {
+  const rotation = (value / 1) * 270 - 135;
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-inner">
@@ -209,17 +220,15 @@ export default function App() {
   const [transcription, setTranscription] = useState<TranscriptionResponse | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [playbackTime, setPlaybackTime] = useState(0);
+  const [, setPlaybackTime] = useState(0);
   const [logs, setLogs] = useState<string[]>(['> CORE ENGINE INITIALIZED', '> WAITING FOR TRANSIENT INPUT']);
   const [isRecording, setIsRecording] = useState(false);
 
-  // UI State for knobs/faders
   const [levels, setLevels] = useState({ kick: 0.8, snare: 0.7, hats: 0.5, master: 0.8 });
   const [thresholds, setThresholds] = useState({ vocal: 0.6, bass: 0.4, melodic: 0.3 });
   const [meterLevels, setMeterLevels] = useState({ kick: 0, snare: 0, hats: 0, master: 0 });
   const [humanizationActive, setHumanizationActive] = useState(false);
 
-  // Audio Refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
@@ -279,7 +288,7 @@ export default function App() {
     audioBufferRef.current = buffer;
 
     analyserRef.current = audioContextRef.current.createAnalyser();
-    analyserRef.current.fftSize = 512; // Use a reasonable FFT size for time domain and frequency data
+    analyserRef.current.fftSize = 512;
     gainNodeRef.current = audioContextRef.current.createGain();
     gainNodeRef.current.gain.value = levels.master;
 
@@ -358,7 +367,7 @@ export default function App() {
     setFileName(file.name);
     setStage(PipelineStage.UPLOADING);
     addLog(`INGESTING: ${file.name.toUpperCase()}`);
-    setError(null); // Clear previous errors
+    setError(null);
 
     try {
       const reader = new FileReader();
@@ -384,13 +393,10 @@ export default function App() {
     }
     setStage(PipelineStage.ANALYZING);
     addLog("MAPPING HARMONIC ONSETS...");
-    setError(null); // Clear previous errors
+    setError(null);
 
     try {
-      // Create a temporary Blob from the AudioBuffer for base64 conversion
-      // This is a workaround as AudioBuffer cannot directly be converted to base64
-      // We need to encode the audio data into a WAV blob first.
-      const audioData = audioBufferRef.current.getChannelData(0); // Assuming mono for simplicity
+      const audioData = audioBufferRef.current.getChannelData(0);
       const wavEncoder = new WAVEncoder(audioData, audioBufferRef.current.sampleRate);
       const wavBlob = wavEncoder.encode();
 
@@ -425,14 +431,13 @@ export default function App() {
     a.download = `${fileName?.split('.')[0] || 'transcription'}.mid`;
     a.click();
     addLog("MIDI BUNDLE EXPORTED.");
-    URL.revokeObjectURL(url); // Clean up the object URL
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-400 p-4 flex items-center justify-center font-sans selection:bg-cyan-500/30 overflow-hidden">
       <div className="w-full max-w-6xl bg-[#1a1a1e] border-4 border-zinc-800 rounded-lg shadow-[0_50px_100px_rgba(0,0,0,1)] relative overflow-hidden">
         
-        {/* RACK HARDWARE DECO */}
         <div className="absolute left-0 inset-y-0 w-12 bg-[#121214] border-r-2 border-black z-10 flex flex-col items-center py-10 justify-between">
           <Screw /><Screw /><Screw /><Screw />
         </div>
@@ -440,7 +445,6 @@ export default function App() {
           <Screw /><Screw /><Screw /><Screw />
         </div>
 
-        {/* HEADER */}
         <div className="relative z-10 px-16 h-20 bg-gradient-to-b from-[#2a2a2e] to-[#1a1a1e] border-b-2 border-black flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="flex flex-col">
@@ -476,10 +480,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* MAIN INTERFACE */}
         <div className="relative z-10 px-6 md:px-16 py-8 grid grid-cols-12 gap-6 md:gap-10 min-h-[520px]">
           
-          {/* LEFT: THRESHOLD MATRIX */}
           <div className="col-span-12 md:col-span-3 space-y-8">
             <div className="p-5 bg-black/40 border border-zinc-800 rounded-lg space-y-6">
                <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
@@ -522,7 +524,6 @@ export default function App() {
                   {isPlaying ? <Square size={14} fill="white" className="text-white" /> : <Play size={14} fill="black" className="text-black ml-1" />}
                </button>
             </div>
-             {/* Humanization Toggle */}
             <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded flex items-center justify-between">
                <div className="flex flex-col">
                  <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">HUMANIZATION</span>
@@ -537,16 +538,13 @@ export default function App() {
             </div>
           </div>
 
-          {/* CENTER: ORB CONSTELLATION & WAVEFORM */}
           <div className="col-span-12 md:col-span-6 flex flex-col items-center justify-center pt-4">
-             {/* ORB SECTION */}
              <div className="flex flex-wrap justify-center gap-8 md:gap-12 mb-10">
                 <OrbKnob label="KICK" value={levels.kick} active={isPlaying && meterLevels.kick > 0.4} color="cyan" onChange={v => setLevels(l => ({...l, kick: v}))} />
                 <OrbKnob label="SNARE" value={levels.snare} active={isPlaying && meterLevels.snare > 0.3} color="purple" onChange={v => setLevels(l => ({...l, snare: v}))} />
                 <OrbKnob label="HATS" value={levels.hats} active={isPlaying && meterLevels.hats > 0.3} color="cyan" onChange={v => setLevels(l => ({...l, hats: v}))} />
              </div>
              
-             {/* WAVEFORM */}
              <div className="w-full h-32 bg-black border-2 border-zinc-800 rounded shadow-[inset_0_2px_15px_rgba(0,0,0,1)] relative overflow-hidden">
                <div className="absolute top-2 left-2 flex items-center gap-2 z-20">
                  <Waves size={10} className="text-cyan-500" />
@@ -561,7 +559,6 @@ export default function App() {
                <ImpactOscilloscope active={isPlaying || isRecording} color="#06b6d4" analyser={analyserRef.current} />
              </div>
 
-             {/* RENDER CONTROLS */}
              <div className="mt-8 flex gap-4 w-full">
                <div className="flex-1 bg-zinc-900 border border-zinc-800 p-3 rounded flex flex-col justify-center">
                  <span className="text-[7px] font-black text-zinc-600 tracking-widest uppercase">SESSION_TAG</span>
@@ -577,7 +574,6 @@ export default function App() {
              </div>
           </div>
 
-          {/* RIGHT: MIXER STRIPS */}
           <div className="col-span-12 md:col-span-3 flex flex-col gap-6">
             <div className="p-4 bg-black/60 border border-zinc-800 rounded-lg flex-1 flex flex-col">
                <div className="flex items-center gap-2 border-b border-zinc-800 pb-2 mb-6">
@@ -601,7 +597,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* BOTTOM CONSOLE */}
         <div className="relative z-10 px-16 h-24 bg-black border-t-2 border-zinc-800 flex items-center justify-between font-mono">
           <div className="space-y-1">
              {logs.map((log, i) => (
