@@ -1,0 +1,5 @@
+{
+  "name": "DRUM Magic",
+  "description": "Neural Transient Processor: Rack-mounted hardware interface for converting audio drum loops and melodies to MIDI using Gemini AI.",
+  "requestFramePermissions": ["microphone"]
+}
