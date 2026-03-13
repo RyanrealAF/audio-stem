@@ -1,0 +1,47 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Web Dependencies
+      run: npm install
+
+    - name: Build Web App
+      run: npm run build
+
+    - name: Install Capacitor
+      run: npm install @capacitor/core @capacitor/cli @capacitor/android
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x android/gradlew
+      
+    - name: Build with Gradle
+      run: ./android/gradlew -p android assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug.apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk

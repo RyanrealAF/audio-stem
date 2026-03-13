@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Drum Magic</string>
+    <string name="title_activity_main">Drum Magic</string>
+    <string name="package_name">com.drummagic.app</string>
+    <string name="custom_url_scheme">com.drummagic.app</string>
+</resources>
